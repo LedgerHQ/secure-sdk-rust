@@ -336,6 +336,7 @@ impl SDKBuilder {
         for header in headers.iter().map(|p| p.to_str().unwrap()) {
             bindings = bindings.header(header);
         }
+        bindings = bindings.header("sdk.h");
 
         // Add in BLE definitions, for all devices. These will be unused on Nano S
         // and S+
