@@ -337,9 +337,18 @@ impl SDKBuilder {
         bindings = bindings.header("sdk.h");
 
         match self.device {
-            Device::NanoS => bindings = bindings.header(self.bolos_sdk.join("include/bagl.h").to_str().unwrap()),
-            Device::NanoX => bindings = bindings.header(self.bolos_sdk.join("lib_blewbxx_impl/include/ledger_ble.h").to_str().unwrap()),
-            _ => ()
+            Device::NanoS => {
+                bindings = bindings.header(self.bolos_sdk.join("include/bagl.h").to_str().unwrap())
+            }
+            Device::NanoX => {
+                bindings = bindings.header(
+                    self.bolos_sdk
+                        .join("lib_blewbxx_impl/include/ledger_ble.h")
+                        .to_str()
+                        .unwrap(),
+                )
+            }
+            _ => (),
         }
         for (define, value) in DEFINES.iter().chain(DEFINES_BLE.iter()) {
             let flag = match value {
