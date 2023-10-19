@@ -1,4 +1,7 @@
-use crate::{io_seph_is_status_sent, io_seph_recv, io_seph_send, SEPROXYHAL_TAG_GENERAL_STATUS};
+use crate::{
+    io_seph_is_status_sent, io_seph_recv, io_seph_send, SEPROXYHAL_TAG_GENERAL_STATUS,
+    SEPROXYHAL_TAG_RAPDU, SEPROXYHAL_TAG_SCREEN_DISPLAY_STATUS,
+};
 
 /// Directly send buffer over the SPI channel to the MCU
 pub fn seph_send(buffer: &[u8]) {
@@ -28,5 +31,23 @@ pub fn send_general_status() {
         // SEPROXYHAL_TAG_GENERAL_STATUS_LAST_COMMAND, which is 0u16
         let status = [SEPROXYHAL_TAG_GENERAL_STATUS as u8, 0, 2, 0, 0];
         seph_send(&status);
+    }
+}
+
+#[repr(u8)]
+pub enum SephTags {
+    ScreenDisplayStatus = SEPROXYHAL_TAG_SCREEN_DISPLAY_STATUS as u8,
+    GeneralStatus = SEPROXYHAL_TAG_GENERAL_STATUS as u8,
+    RawAPDU = SEPROXYHAL_TAG_RAPDU as u8,
+    Unknown,
+}
+
+impl From<u8> for SephTags {
+    fn from(v: u8) -> SephTags {
+        match v as u32 {
+            SEPROXYHAL_TAG_SCREEN_DISPLAY_STATUS => SephTags::ScreenDisplayStatus,
+            SEPROXYHAL_TAG_GENERAL_STATUS => SephTags::GeneralStatus,
+            _ => SephTags::Unknown,
+        }
     }
 }

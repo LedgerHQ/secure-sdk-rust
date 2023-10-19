@@ -4,7 +4,7 @@ use std::process::Command;
 use std::{env, fs::File, io::BufRead, io::BufReader, io::Read};
 
 // Definitions common to both `cc` and `bindgen`
-const DEFINES: [(&str, Option<&str>); 10] = [
+const DEFINES: [(&str, Option<&str>); 11] = [
     ("HAVE_LOCAL_APDU_BUFFER", None),
     ("IO_HID_EP_LENGTH", Some("64")),
     ("USB_SEGMENT_SIZE", Some("64")),
@@ -15,6 +15,7 @@ const DEFINES: [(&str, Option<&str>); 10] = [
     ("__IO", Some("volatile")),
     ("IO_USB_MAX_ENDPOINTS", Some("6")),
     ("IO_SEPROXYHAL_BUFFER_SIZE_B", Some("128")),
+    ("main", Some("_start")),
 ];
 
 // Feature-specific definitions
@@ -307,7 +308,6 @@ impl SDKBuilder {
             format!("-I{bsdk}/lib_cxng/include/"),
             format!("-I{bsdk}/lib_stusb/STM32_USB_Device_Library/Core/Inc/"),
             format!("-I{bsdk}/lib_stusb/"),
-            // .header(bolos_sdk.join("lib_bagl/include/bagl.h").as_path().to_str().unwrap())
         ];
 
         let headers = str2path(
@@ -316,13 +316,11 @@ impl SDKBuilder {
                 "lib_cxng/include/libcxng.h",
                 "include/os.h",
                 "include/os_screen.h",
-                "lib_bagl/include/bagl.h",
                 "include/syscalls.h",
                 "include/os_io_seproxyhal.h",
                 "include/os_ux.h",
                 "include/ox.h",
                 "lib_stusb/STM32_USB_Device_Library/Core/Inc/usbd_def.h",
-                "lib_blewbxx_impl/include/ledger_ble.h",
             ],
         );
 
@@ -338,8 +336,20 @@ impl SDKBuilder {
         }
         bindings = bindings.header("sdk.h");
 
-        // Add in BLE definitions, for all devices. These will be unused on Nano S
-        // and S+
+        match self.device {
+            Device::NanoS => {
+                bindings = bindings.header(self.bolos_sdk.join("include/bagl.h").to_str().unwrap())
+            }
+            Device::NanoX => {
+                bindings = bindings.header(
+                    self.bolos_sdk
+                        .join("lib_blewbxx_impl/include/ledger_ble.h")
+                        .to_str()
+                        .unwrap(),
+                )
+            }
+            _ => (),
+        }
         for (define, value) in DEFINES.iter().chain(DEFINES_BLE.iter()) {
             let flag = match value {
                 Some(v) => format!("-D{define}={v}"),
